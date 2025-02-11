@@ -1,0 +1,98 @@
+---
+title: "WCS MERMAID Fishbelt Dashboard Visualizations"
+author: "Iain R. Caldwell"
+date: 02/11/2025
+format: 
+  html: #for website
+    embed-resources: true
+editor: visual
+---
+
+This code provides examples of visualizations shown on the MERMAID dashboard ([https://dashboard.datamermaid.org](https://dashboard.datamermaid.org/)) that use data from the fishbelt protocol.
+
+### Getting fishbelt data
+
+Download summary sample event data from MERMAID ([https://datamermaid.org](https://datamermaid.org/)), using the mermaidr package (documentation can be found at <https://data-mermaid.github.io/mermaidr/>).
+
+```{r}
+#| label: Load packages and download data
+#| warning: false
+rm(list = ls()) #remove past stored objects
+options(scipen = 999) #turn off scientific notation
+
+####  Load packages and libraries ####
+## If this is the first time using mermaidr, install the package through "remotes"
+# install.packages("remotes")
+# remotes::install_github("data-mermaid/mermaidr")
+# install.packages("tidyverse")
+# install.packages("plotly") 
+# install.packages("htmlwidgets")
+
+library(mermaidr) #package to download data from datamermaid.org
+library(tidyverse) #package that makes it easier to work with data
+library(plotly) #for interactive plotting
+library(htmlwidgets) #for saving plots at html files
+
+#### Get data from MERMAID for creating aggregate visualizations ####
+allMermaidSampEventsTBL <- mermaidr::mermaid_get_summary_sampleevents()
+```
+
+### Aggregate data - histogram of fish biomass (kg/ha)
+
+This code creates a histogram of the fish biomass data from all the sample events available with permissions of "public summary" or "public". It includes the total number of surveys (i.e. sample events in MERMAID) and truncates the data at 5000 kg/ha, with any surveys above that grouped into a single bar for "5000+".
+
+```{r}
+#| label: Histogram of fish biomass from summary sample events
+
+### Fish biomass data - only use relevant data and truncate > 5000 kg/ha
+fishbeltSurveySummTBL <- allMermaidSampEventsTBL %>% 
+  filter(!is.na(beltfish_biomass_kgha_avg)) %>% 
+  mutate(truncBiomass = ifelse(test = beltfish_biomass_kgha_avg > 5000,
+                               yes = 5001,
+                               no = beltfish_biomass_kgha_avg))
+
+### Create the plot
+fishbeltAggHist <-
+  plot_ly(data = fishbeltSurveySummTBL,
+          x = ~truncBiomass,
+          type = 'histogram',
+          xbins = list(start = 0, size = 100),
+          marker = list(color = "#769fca"),
+          height = 450) %>%
+  config(displayModeBar = TRUE,
+         displaylogo = FALSE,
+         modeBarButtonsToRemove = c('zoom','pan', 'select', 'zoomIn', 'zoomOut',
+                                    'autoScale', 'resetScale', 'lasso2d',
+                                    'hoverClosestCartesian', 'hoverCompareCartesian')) %>% 
+  layout(bargap = 0.1,
+         xaxis = list(title = "Fish biomass (kg/ha)",
+                      linecolor = "black",
+                      linewidth = 2,
+                      tickmode = "array",
+                      ticktext = list("0",
+                                      "1000",
+                                      "2000",
+                                      "3000",
+                                      "4000",
+                                      "5000+"),
+                      tickvals = list(0, 1000, 2000, 3000, 4000, 5000)),
+         yaxis = list(title = "Number of surveys",
+                      #type = 'log',
+                      linecolor = "black",   # Set the y-axis line color to black
+                      linewidth = 2),
+         annotations = list(
+           list(x = 0, y = 1.15, text = "FISH BIOMASS (KG/HA)", showarrow = FALSE, 
+                xref = 'paper', yref = 'paper', xanchor = 'left', yanchor = 'top',
+                font = list(size = 20)),
+           list(x = 0, y = 1.08,
+                text = paste0(length(fishbeltSurveySummTBL$beltfish_biomass_kgha_avg),
+                             " Surveys"),
+                showarrow = FALSE, 
+                xref = 'paper', yref = 'paper', xanchor = 'left', yanchor = 'top',
+                font = list(size = 12))
+         ),
+         margin = list(t = 50, b = 75))  # Increase top margin to create more space for title and subtitle
+
+# Visualize the plot
+fishbeltAggHist
+```
