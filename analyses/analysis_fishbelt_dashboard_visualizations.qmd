@@ -3,9 +3,7 @@ title: "WCS MERMAID Fishbelt Dashboard Visualizations"
 author: "Iain R. Caldwell"
 date: 02/12/2025
 format: 
-  html: #for website
-    embed-resources: true
-editor: visual
+  gfm: 
 ---
 
 This code provides examples of visualizations shown on the MERMAID dashboard ([https://dashboard.datamermaid.org](https://dashboard.datamermaid.org/)) that use data from the fishbelt protocol.
