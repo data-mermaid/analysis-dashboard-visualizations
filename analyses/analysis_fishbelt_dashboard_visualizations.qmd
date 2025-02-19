@@ -10,7 +10,7 @@ editor: visual
 
 This code provides examples of visualizations shown on the MERMAID dashboard ([https://dashboard.datamermaid.org](https://dashboard.datamermaid.org/)) that use data from the fishbelt protocol.
 
-### Getting fishbelt data from MERMAID
+### Getting summary sample event data from MERMAID
 
 Download summary sample event data from MERMAID ([https://datamermaid.org](https://datamermaid.org/)), using the mermaidr package (documentation can be found at <https://data-mermaid.github.io/mermaidr/>).
 
