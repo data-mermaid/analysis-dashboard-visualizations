@@ -1,11 +1,19 @@
 ---
-title: "WCS MERMAID Benthic Cover Dashboard Visualizations"
+title: "WCS MERMAID Explore Visualizations"
+subtitle: "Benthic Cover"
 author: "Iain R. Caldwell"
-date: 02/18/2025
+date: 03/20/2025
 format: 
   html: #for website
     embed-resources: true
 editor: visual
+code-fold: true
+code-summary: "Show the code"
+code-link: true
+toc: true
+title-block-banner: "#f0f3f5"
+title-block-banner-color: "black"
+include-after-body: "footer.html"
 ---
 
 This code provides examples of visualizations shown on the MERMAID dashboard ([https://dashboard.datamermaid.org](https://dashboard.datamermaid.org/)) that use data from one or more of the benthic protocols that collect information about the % cover of benthic categories (PIT, LIT, Photo Quadrat, and Bleaching surveys).
@@ -91,7 +99,7 @@ hardCoralAggHist <-
                 x0 = 30, x1 = 30, y0 = 0, y1 = 1, yref = "paper", 
                 line = list(color = "black", dash = "dot"))
          ),
-         xaxis = list(title = "% Hard Coral Cover",
+         xaxis = list(title = "Hard coral cover (%)",
                       linecolor = "black",
                       linewidth = 2,
                       tickvals = seq(0, 100, by = 10),  # Set x-axis tick values
@@ -110,7 +118,8 @@ hardCoralAggHist <-
                 xref = 'paper', yref = 'paper', xanchor = 'left', yanchor = 'top',
                 font = list(size = 12))
          ),
-         margin = list(t = 50, b = 75))  # Increase top margin to create more space for title and subtitle
+         margin = list(t = 50, b = 75)) %>%  # Increase top margin to create more space for title and subtitle
+  style(hovertemplate = "Bin: %{x}% cover<br>%{y} surveys<extra></extra>") 
 
 # Visualize the plot
 hardCoralAggHist
@@ -122,6 +131,7 @@ Stacked barplot showing the percent cover (y-axis) by year (x-axis) for each of 
 
 ```{r}
 #| label: Time series - % benthic cover by year and category
+#| warning: false
 
 ### Get average % cover for 11 broad categories across three survey protocols
 benthicAvgTBL <- allMermaidSampEventsTBL %>% 
@@ -275,7 +285,7 @@ benthicTimeSeriesPercBarplot <-
                       linecolor = "black",   # Set the x-axis line color to black
                       linewidth = 2),
          annotations = list(
-           list(x = 0, y = 1.15, text = "BENTHIC % COVER (PIT)", showarrow = FALSE,
+           list(x = 0, y = 1.15, text = "BENTHIC % COVER", showarrow = FALSE,
                 xref = 'paper', yref = 'paper', xanchor = 'left', yanchor = 'top',
                 font = list(size = 20)),
            list(x = 0, y = 1.06,
@@ -298,69 +308,77 @@ benthicTimeSeriesPercBarplot
 
 ### Stacked Single Barplot - % cover by category (single survey)
 
-Code to create a single stacked barplot showing the percent cover (y-axis), with different colors representing 11 broad level benthic categories: Hard coral, Bare substrate, Crustose coralline algae, Rubble, Cyanobacteria, Seagrass, Sand, Macroalgae, Turf algae, Soft coral, Other invertebrates. This code shows an example with a single sample event (i.e. survey) but could be adapted to apply to multiple surveys and sites. As with the previous plot, this visualization uses the average % cover for each of the 11 categories across three benthic protocols (benthic PIT, benthic LIT, benthic PQT).
+Code to create a single stacked barplot showing the percent cover (y-axis), with different colors representing 11 broad level benthic categories: Hard coral, Bare substrate, Crustose coralline algae, Rubble, Cyanobacteria, Seagrass, Sand, Macroalgae, Turf algae, Soft coral, Other invertebrates. This code shows an example with a single sample event (i.e. survey) but could be adapted to apply to multiple surveys and sites. As in MERMAID Explore, this visualization also just focuses on one method - in this case benthic PIT - but could be used for others.
 
 ```{r}
 #| label: Single stacked barplot - % cover by category (single survey)
 
-benthicSingleSeTBL <- benthicAvgTBL %>% 
-  select(project, site, starts_with("all_percent_cover_")) 
-
-## create fixed label and color mapping for the benthic categories
-benthicLabels <- str_to_sentence(
-  gsub(
-    x = gsub(
-      x = colnames(
-        benthicSingleSeTBL %>%
-          select(-all_percent_cover_sample_unit_count)),
-      pattern = "all_percent_cover_avg_",
-      replacement = ""),
-    pattern =  "_",
-    replacement = " "))
-
-benthicColorMap <- setNames(
-  object = c("#498fc9", "#f2f3f3", "#fbd7d5", "#f5f6af", "#870e00", "#4d4d4d", "#c1b180", "#b2b000", "#d9eea8", "#9ce5fa", "#4e4e4e"),
-  nm = levels(benthicLabels))
+benthicPitSingleSeTBL <- benthicAvgTBL %>% 
+  select(project, site, benthicpit_sample_unit_count,
+         starts_with("benthicpit_percent_cover_benthic_category_avg_")) %>% 
+  filter(benthicpit_sample_unit_count > 0) #Get only those with benthic PIT protocol
 
 # Create the histogram using plotly
-benthicPercSingleSeBarplot <-
-  plot_ly(data = benthicSingleSeTBL[1,],
+benthicPitPercSingleSeBarplot <-
+  plot_ly(data = benthicPitSingleSeTBL[1,],
           x = 1,
-          y = ~all_percent_cover_avg_Hard_coral,
+          y = ~`benthicpit_percent_cover_benthic_category_avg_Hard coral`,
           type = 'bar',
-          name = paste0("Hard coral (", benthicSingleSeTBL$all_percent_cover_avg_Hard_coral[1], "%)"),
+          name = paste0("Hard coral (",
+                        benthicPitSingleSeTBL$`benthicpit_percent_cover_benthic_category_avg_Hard coral`[1],
+                        "%)"),
           marker = list(color = "#498fc9"),
           height = 450,
           width = 500) %>%
-  add_trace(y = ~all_percent_cover_avg_Bare_substrate,
-            name = paste0("Bare substrate (", benthicSingleSeTBL$all_percent_cover_avg_Bare_substrate[1], "%)"),
+  add_trace(y = ~`benthicpit_percent_cover_benthic_category_avg_Bare substrate`,
+            name = paste0("Bare substrate (",
+                          benthicPitSingleSeTBL$`benthicpit_percent_cover_benthic_category_avg_Bare substrate`[1],
+                          "%)"),
             marker = list(color = "#f2f3f3")) %>% 
-  add_trace(y = ~all_percent_cover_avg_Crustose_coralline_algae,
-            name = paste0("Crustose coralline algae (", benthicSingleSeTBL$all_percent_cover_avg_Crustose_coralline_algae[1], "%)"),
+  add_trace(y = ~`benthicpit_percent_cover_benthic_category_avg_Crustose coralline algae`,
+            name = paste0("Crustose coralline algae (",
+                          benthicPitSingleSeTBL$`benthicpit_percent_cover_benthic_category_avg_Crustose coralline algae`[1],
+                          "%)"),
             marker = list(color = "#fbd7d5")) %>% 
-  add_trace(y = ~all_percent_cover_avg_Rubble,
-            name = paste0("Rubble (", benthicSingleSeTBL$all_percent_cover_avg_Rubble[1], "%)"),
+  add_trace(y = ~benthicpit_percent_cover_benthic_category_avg_Rubble,
+            name = paste0("Rubble (",
+                          benthicPitSingleSeTBL$benthicpit_percent_cover_benthic_category_avg_Rubble[1],
+                          "%)"),
             marker = list(color = "#f5f6af")) %>% 
-  add_trace(y = ~all_percent_cover_avg_Cyanobacteria,
-            name = paste0("Cyanobacteria (", benthicSingleSeTBL$all_percent_cover_avg_Cyanobacteria[1], "%)"),
+  add_trace(y = ~benthicpit_percent_cover_benthic_category_avg_Cyanobacteria,
+            name = paste0("Cyanobacteria (",
+                          benthicPitSingleSeTBL$benthicpit_percent_cover_benthic_category_avg_Cyanobacteria[1],
+                          "%)"),
             marker = list(color = "#870e00")) %>% 
-  add_trace(y = ~all_percent_cover_avg_Seagrass,
-            name = paste0("Seagrass (", benthicSingleSeTBL$all_percent_cover_avg_Seagrass[1], "%)"),
+  add_trace(y = ~benthicpit_percent_cover_benthic_category_avg_Seagrass,
+            name = paste0("Seagrass (",
+                          benthicPitSingleSeTBL$benthicpit_percent_cover_benthic_category_avg_Seagrass[1],
+                          "%)"),
             marker = list(color = "#4d4d4d")) %>% 
-  add_trace(y = ~all_percent_cover_avg_Sand,
-            name = paste0("Sand (", benthicSingleSeTBL$all_percent_cover_avg_Sand[1], "%)"),
+  add_trace(y = ~benthicpit_percent_cover_benthic_category_avg_Sand,
+            name = paste0("Sand (",
+                          benthicPitSingleSeTBL$benthicpit_percent_cover_benthic_category_avg_Sand[1],
+                          "%)"),
             marker = list(color = "#c1b180")) %>% 
-  add_trace(y = ~all_percent_cover_avg_Macroalgae,
-            name = paste0("Macroalgae (", benthicSingleSeTBL$all_percent_cover_avg_Macroalgae[1], "%)"),
+  add_trace(y = ~benthicpit_percent_cover_benthic_category_avg_Macroalgae,
+            name = paste0("Macroalgae (",
+                          benthicPitSingleSeTBL$benthicpit_percent_cover_benthic_category_avg_Macroalgae[1],
+                          "%)"),
             marker = list(color = "#b2b000")) %>% 
-  add_trace(y = ~all_percent_cover_avg_Turf_algae,
-            name = paste0("Turf algae (", benthicSingleSeTBL$all_percent_cover_avg_Turf_algae[1], "%)"),
+  add_trace(y = ~`benthicpit_percent_cover_benthic_category_avg_Turf algae`,
+            name = paste0("Turf algae (",
+                          benthicPitSingleSeTBL$`benthicpit_percent_cover_benthic_category_avg_Turf algae`[1],
+                          "%)"),
             marker = list(color = "#d9eea8")) %>% 
-  add_trace(y = ~all_percent_cover_avg_Soft_coral,
-            name = paste0("Soft coral (", benthicSingleSeTBL$all_percent_cover_avg_Soft_coral[1], "%)"),
+  add_trace(y = ~`benthicpit_percent_cover_benthic_category_avg_Soft coral`,
+            name = paste0("Soft coral (",
+                          benthicPitSingleSeTBL$`benthicpit_percent_cover_benthic_category_avg_Soft coral`[1],
+                          "%)"),
             marker = list(color = "#9ce5fa")) %>% 
-  add_trace(y = ~all_percent_cover_avg_Other_invertebrates,
-            name = paste0("Other invertebrates (", benthicSingleSeTBL$all_percent_cover_avg_Other_invertebrates[1], "%)"),
+  add_trace(y = ~`benthicpit_percent_cover_benthic_category_avg_Other invertebrates`,
+            name = paste0("Other invertebrates (",
+                          benthicPitSingleSeTBL$`benthicpit_percent_cover_benthic_category_avg_Other invertebrates`[1],
+                          "%)"),
             marker = list(color = "#4e4e4e")) %>% 
   config(displayModeBar = TRUE,
          displaylogo = FALSE,
@@ -381,11 +399,11 @@ benthicPercSingleSeBarplot <-
                       linewidth = 2,
                       showticklabels=FALSE),
          annotations = list(
-           list(x = 0, y = 1.15, text = "BENTHIC % COVER", showarrow = FALSE,
+           list(x = 0, y = 1.15, text = "BENTHIC % COVER (PIT)", showarrow = FALSE,
                 xref = 'paper', yref = 'paper', xanchor = 'left', yanchor = 'top',
                 font = list(size = 20)),
            list(x = 0, y = 1.08,
-                text = paste(benthicSingleSeTBL$all_percent_cover_sample_unit_count[1],
+                text = paste(benthicPitSingleSeTBL$benthicpit_sample_unit_count[1],
                              " Sample units"),
                 showarrow = FALSE, 
                 xref = 'paper', yref = 'paper', xanchor = 'left', yanchor = 'top',
@@ -394,85 +412,9 @@ benthicPercSingleSeBarplot <-
          margin = list(t = 50, b = 75))
 
 # Visualize the plot
-benthicPercSingleSeBarplot
+benthicPitPercSingleSeBarplot
 
 
 ```
 
-### Donut plot - % cover from bleaching protocol (single survey)
-
-This code creates a donut plot showing the percent cover of the three broad benthic categories (represented by different colors) that are estimated in the quadrat section of the bleaching protocol. Since this protocol does not include all 11 of the benthic categories represented in the other benthic protocols (see above), I thought it would be worthwhile to show a separate example of what can be done with a smaller number of categories.
-
-```{r}
-#| label: Donut plot - % cover by category (single bleaching survey)
-
-### Bleaching % benthic cover data - single sample event
-bleachPercBenthicTBL <- allMermaidSampEventsTBL %>% 
-  select(project, site, starts_with("quadrat_benthic_percent_")) %>% 
-  replace(is.na(.), 0) %>% 
-  filter(quadrat_benthic_percent_quadrat_count_avg > 0) %>% 
-  mutate(TotalQuadrats = quadrat_benthic_percent_quadrat_count_avg*quadrat_benthic_percent_sample_unit_count,
-         quadrat_benthic_percent_percent_other_avg_avg = 100 -
-           quadrat_benthic_percent_percent_hard_avg_avg - 
-           quadrat_benthic_percent_percent_soft_avg_avg - 
-           quadrat_benthic_percent_percent_algae_avg_avg) %>% 
-  filter(project == "Barefoot Manta Bleaching Surveys 2023" &
-           site == "Sunrise Beach")
-
-## create fixed label and color mapping for the bleaching benthic categories
-## Assigning labels based on the percent columns
-bleachBenthicLabels <- c("Hard coral", "Soft coral", "Algae", "Other")
-
-bleachBenthicColorMap <- setNames(
-  object = c("#498fc9", "#9ce5fa", "#b6b400", "#b4b4b4"),
-  nm = bleachBenthicLabels)
-
-bleachingBenthicCoverDonutPlot <- 
-  plot_ly(data = bleachPercBenthicTBL,
-          labels = paste0(
-            bleachBenthicLabels,
-            " (",
-            as.numeric(
-            bleachPercBenthicTBL[1,
-                                 colnames(
-                                   bleachPercBenthicTBL %>% 
-                                     select(
-                                       starts_with(
-                                         "quadrat_benthic_percent_percent")))]),
-            "%)"),
-          values = as.numeric(
-            bleachPercBenthicTBL[1,
-                                 colnames(
-                                   bleachPercBenthicTBL %>% 
-                                     select(
-                                       starts_with(
-                                         "quadrat_benthic_percent_percent")))]),
-          textposition = 'inside',
-          textinfo = 'percent',
-          height = 450) %>%
-  add_pie(hole = 0.5,
-          marker = list(colors = bleachBenthicColorMap,
-                        line = list(color = '#FFFFFF', width = 1))) %>% 
-  config(displayModeBar = TRUE,
-         displaylogo = FALSE,
-         modeBarButtonsToRemove = c('zoom','pan', 'select', 'zoomIn', 'zoomOut',
-                                    'autoScale', 'resetScale', 'lasso2d',
-                                    'hoverClosestPie')) %>% 
-  layout(xaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
-         yaxis = list(showgrid = FALSE, zeroline = FALSE, showticklabels = FALSE),
-         annotations = list(
-           list(x = 0, y = 1.15, text = "BLEACHING - % BENTHIC COVER", showarrow = FALSE,
-                xref = 'paper', yref = 'paper', xanchor = 'left', yanchor = 'top',
-                font = list(size = 20)),
-           list(x = 0, y = 1.08,
-                text = paste0(bleachPercBenthicTBL$TotalQuadrats[1],
-                             " Quadrats"),
-                showarrow = FALSE, 
-                xref = 'paper', yref = 'paper', xanchor = 'left', yanchor = 'top',
-                font = list(size = 12))),
-         margin = list(t = 50, b = 75))  # Increase top margin to create more space for title and subtitle
-  
-# Visualize the plot
-bleachingBenthicCoverDonutPlot
-
-```
+### 

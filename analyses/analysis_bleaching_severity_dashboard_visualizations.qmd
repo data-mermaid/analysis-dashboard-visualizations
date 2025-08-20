@@ -37,7 +37,7 @@ library(htmlwidgets) #for saving plots at html files
 allMermaidSampEventsTBL <- mermaidr::mermaid_get_summary_sampleevents()
 ```
 
-### Barplot - number of coral colonies by bleaching severity 
+### Barplot - number of coral colonies by bleaching severity
 
 This code creates a barplot showing the total number of coral colonies across all surveys (summary sample events) that have been found to be in each of seven levels of bleaching severity. It also includes code to show the total number of coral colonies observed at the top of the plot.
 
